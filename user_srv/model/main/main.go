@@ -1,15 +1,25 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
+	"io"
 	"log"
 	"os"
 	"shop_srvs/user_srv/model"
 	"time"
 )
+
+func genMd5(code string) string {
+	Md5 := md5.New()
+	_, _ = io.WriteString(Md5, code)
+
+	return hex.EncodeToString(Md5.Sum(nil))
+}
 
 func main() {
 	// 1.参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name 获取详情
@@ -40,4 +50,13 @@ func main() {
 
 	// 4.迁移schema
 	_ = db.AutoMigrate(&model.User{})
+
+	// 5.md5加密
+	//options := &password.Options{16, 100, 32, sha512.New}
+	//salt, encodePwd := password.Encode("generic password", options)
+	//newPassword := fmt.Sprintf("$pbkdf2-sha512$%s$%s", salt, encodePwd)
+	//
+	//passwordInfo := strings.Split(newPassword, "$")
+	//check := password.Verify("generic password", passwordInfo[2], passwordInfo[3], options)
+	//fmt.Println(check)
 }
