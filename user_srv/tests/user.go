@@ -28,7 +28,6 @@ func TestGetUserList() {
 	}
 
 	for _, userInfoResponse := range UserListResponse.Data {
-		fmt.Println(userInfoResponse)
 		fmt.Println(userInfoResponse.Id, userInfoResponse.Mobile, userInfoResponse.Nickname)
 
 		checkRes, err := userClient.CheckPassword(context.Background(), &proto.PasswordCheckInfo{
@@ -44,20 +43,33 @@ func TestGetUserList() {
 
 func TestGetUserByMobile() {
 
-	r, err := userClient.GetUserByMobile(context.Background(), &proto.MobileRequest{Mobile: "13777891955"})
+	user, err := userClient.GetUserByMobile(context.Background(), &proto.MobileRequest{Mobile: "13777891955"})
 	if err != nil {
 		panic("调用失败")
 	}
-	fmt.Println(r.ProtoMessage)
+	fmt.Println(user.Mobile)
 }
 
 func TestGetUserById() {
 
-	r, err := userClient.GetUserList(context.Background(), &proto.PageInfo{Page: 1, PageSize: 5})
+	user, err := userClient.GetUserById(context.Background(), &proto.IdRequest{Id: "3"})
 	if err != nil {
 		panic("调用失败")
 	}
-	fmt.Println(r.ProtoMessage)
+	fmt.Println(user.Id, user.Mobile)
+}
+
+func TestCreateUser() {
+
+	user, err := userClient.CreateUser(context.Background(), &proto.CreateUserInfo{
+		Nickname: "xxmx",
+		Mobile:   "13777891966",
+		Password: "admin321",
+	})
+	if err != nil {
+		panic("调用失败")
+	}
+	fmt.Println(user.Nickname, user.Mobile)
 }
 
 func main() {
@@ -65,5 +77,7 @@ func main() {
 	defer connect.Close()
 
 	TestGetUserList()
-
+	TestGetUserByMobile()
+	TestGetUserById()
+	TestCreateUser()
 }
