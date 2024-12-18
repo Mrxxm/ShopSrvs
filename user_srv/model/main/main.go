@@ -53,10 +53,20 @@ func main() {
 
 	// 5.md5加密
 	//options := &password.Options{16, 100, 32, sha512.New}
-	//salt, encodePwd := password.Encode("generic password", options)
+	//salt, encodePwd := password.Encode("admin123", options)
 	//newPassword := fmt.Sprintf("$pbkdf2-sha512$%s$%s", salt, encodePwd)
 	//
 	//passwordInfo := strings.Split(newPassword, "$")
 	//check := password.Verify("generic password", passwordInfo[2], passwordInfo[3], options)
 	//fmt.Println(check)
+
+	// 6.批量创建用户
+	//for i := 0; i < 10; i++ {
+	//	user := model.User{
+	//		Nickname: fmt.Sprintf("xxm%d", i),
+	//		Mobile:   fmt.Sprintf("1377789195%d", i),
+	//		Password: newPassword,
+	//	}
+	//	db.Save(&user)
+	//}
 }
