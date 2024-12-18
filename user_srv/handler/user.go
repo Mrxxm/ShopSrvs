@@ -2,8 +2,12 @@ package handler
 
 import (
 	"context"
+	"crypto/sha512"
+	"fmt"
+	"github.com/anaskhan96/go-password-encoder"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
 	"shop_srvs/user_srv/global"
 	"shop_srvs/user_srv/model"
@@ -105,4 +109,36 @@ func (s *UserService) GetUserById(ctx context.Context, request *proto.IdRequest)
 	userInfoResponse := ModelToResponse(user)
 
 	return &userInfoResponse, nil
+}
+
+func (s *UserService) CreateUser(ctx context.Context, request *proto.CreateUserInfo) (*proto.UserInfoResponse, error) {
+
+	var user model.User
+
+	result := global.DB.Where("mobile = ?", request.Mobile).First(&user)
+	if result.RowsAffected > 0 {
+		return nil, status.Errorf(codes.AlreadyExists, "用户已存在")
+	}
+
+	user.Mobile = request.Mobile
+	user.Nickname = request.Nickname
+
+	options := &password.Options{16, 100, 32, sha512.New}
+	salt, encodePwd := password.Encode(request.Password, options)
+	user.Password = fmt.Sprintf("$pbkdf2-sha512$%s$%s", salt, encodePwd)
+
+	result = global.DB.Create(&user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	rsp := ModelToResponse(user)
+
+	return &rsp, nil
+}
+func (s *UserService) UpdateUser(ctx context.Context, request *proto.UpdateUserInfo) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (s *UserService) CheckPassword(ctx context.Context, request *proto.PasswordCheckInfo) (*proto.CheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckPassword not implemented")
 }
