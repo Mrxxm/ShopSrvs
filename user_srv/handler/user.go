@@ -5,6 +5,7 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"github.com/anaskhan96/go-password-encoder"
+	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -12,6 +13,8 @@ import (
 	"shop_srvs/user_srv/global"
 	"shop_srvs/user_srv/model"
 	"shop_srvs/user_srv/proto"
+	"strings"
+	"time"
 )
 
 type UserService struct{}
@@ -136,9 +139,36 @@ func (s *UserService) CreateUser(ctx context.Context, request *proto.CreateUserI
 
 	return &rsp, nil
 }
+
 func (s *UserService) UpdateUser(ctx context.Context, request *proto.UpdateUserInfo) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+	var user model.User
+
+	result := global.DB.Where("id = ?", request.Id).First(&user)
+	if result.RowsAffected == 0 {
+		return nil, status.Errorf(codes.NotFound, "用户不存在")
+	}
+
+	birthday := time.Unix(int64(request.Birthday), 0)
+
+	user.Nickname = request.Nickname
+	user.Gender = request.Gender
+	user.Birthday = &birthday
+
+	res := global.DB.Save(&user)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return &empty.Empty{}, nil
 }
+
 func (s *UserService) CheckPassword(ctx context.Context, request *proto.PasswordCheckInfo) (*proto.CheckResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CheckPassword not implemented")
+
+	options := &password.Options{16, 100, 32, sha512.New}
+	passwordInfo := strings.Split(request.EncryptedPassword, "$")
+	check := password.Verify(request.Password, passwordInfo[2], passwordInfo[3], options)
+
+	return &proto.CheckResponse{
+		Success: check,
+	}, nil
 }
