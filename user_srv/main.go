@@ -3,26 +3,30 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/hashicorp/consul/api"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"net"
 	"shop_srvs/user_srv/global"
-
-	"github.com/hashicorp/consul/api"
-	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"shop_srvs/user_srv/handler"
 	"shop_srvs/user_srv/initialize"
 	"shop_srvs/user_srv/proto"
+	"shop_srvs/user_srv/utils"
 )
 
 func main() {
-	IP := flag.String("ip", "0.0.0.0", "ip地址")
-	Port := flag.Int("port", 50051, "端口号")
+	// 使用命令行设置IP和端口号
+	IP := flag.String("ip", "192.168.15.21", "ip地址")
+	Port := flag.Int("port", 0, "端口号")
 	flag.Parse()
 	// 1.日志初始化
 	initialize.InitLogger()
-	zap.S().Info("ip: , Port: ", *IP, *Port)
+	if *Port == 0 {
+		*Port, _ = utils.GetFreePort()
+	}
+	zap.S().Info("ip: , Port: ", *IP, " ", *Port)
 
 	// 2.初始化配置
 	initialize.InitConfig()
@@ -50,7 +54,7 @@ func main() {
 	}
 	// 7.3.注册服务&生成注册对象&生成检查对象
 	check := &api.AgentServiceCheck{
-		GRPC:                           fmt.Sprintf("192.168.15.21:50051"),
+		GRPC:                           fmt.Sprintf("%s:%d", *IP, *Port),
 		Timeout:                        "5s",  // 超时时间
 		Interval:                       "5s",  // 健康检查间隔
 		DeregisterCriticalServiceAfter: "10s", // 多久后注销服务
