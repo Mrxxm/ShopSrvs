@@ -4,16 +4,20 @@ import (
 	"flag"
 	"fmt"
 	"github.com/hashicorp/consul/api"
+	"github.com/satori/go.uuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"net"
+	"os"
+	"os/signal"
 	"shop_srvs/user_srv/global"
 	"shop_srvs/user_srv/handler"
 	"shop_srvs/user_srv/initialize"
 	"shop_srvs/user_srv/proto"
 	"shop_srvs/user_srv/utils"
+	"syscall"
 )
 
 func main() {
@@ -61,7 +65,9 @@ func main() {
 	}
 	registration := new(api.AgentServiceRegistration)
 	registration.Name = global.ServerConfig.Name
-	registration.ID = global.ServerConfig.Name
+	serviceID := fmt.Sprintf("%s", uuid.NewV4()) // 服务id
+	//registration.ID = global.ServerConfig.Name
+	registration.ID = serviceID // 启动多个服务
 	registration.Port = *Port
 	registration.Tags = []string{"xxm", "grpc", "user", "srv"}
 	registration.Address = "192.168.15.21"
@@ -72,6 +78,17 @@ func main() {
 		panic(err)
 	}
 
-	_ = server.Serve(listener)
+	go func() {
+		_ = server.Serve(listener) // 阻塞的方法,需要放在goroutine中，否则后续代码无法执行
+	}()
 
+	// 8.优雅退出，接收终止信号
+	quit := make(chan os.Signal) // 无缓冲区通道
+	// SIGINT（通常是用户按下 Ctrl+C）和 SIGTERM（通常是终止进程的信号）。当程序收到这两个信号之一时，操作系统会将信号发送到 quit 通道。
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM) // 它用于接收来自操作系统的信号（比如中断信号 SIGINT 或终止信号 SIGTERM）
+	<-quit                                               // 这一行代码会阻塞程序的执行，直到从 quit 通道接收到信号
+	if err = client.Agent().ServiceDeregister(serviceID); err != nil {
+		zap.S().Info("注销失败")
+	}
+	zap.S().Info("注销成功")
 }
