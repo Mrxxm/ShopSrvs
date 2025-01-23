@@ -69,7 +69,7 @@ func main() {
 	//registration.ID = global.ServerConfig.Name
 	registration.ID = serviceID // 启动多个服务
 	registration.Port = *Port
-	registration.Tags = []string{"xxm", "grpc", "user", "srv"}
+	registration.Tags = global.ServerConfig.Tags
 	registration.Address = "192.168.15.21"
 	registration.Check = check
 
