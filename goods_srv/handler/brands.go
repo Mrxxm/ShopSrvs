@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"shop_srvs/goods_srv/global"
 	"shop_srvs/goods_srv/model"
 	"shop_srvs/goods_srv/proto"
@@ -17,8 +16,9 @@ func (s *GoodsService) BrandList(ctx context.Context, req *proto.BrandFilterRequ
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	fmt.Println(int32(result.RowsAffected))
 
+	var count int64
+	global.DB.Model(&model.Brands{}).Count(&count)
 	global.DB.Scopes(Paginate(int(req.Pages), int(req.PagePerNums))).Find(&brands)
 
 	var brandResponses []*proto.BrandInfoResponse
@@ -32,7 +32,7 @@ func (s *GoodsService) BrandList(ctx context.Context, req *proto.BrandFilterRequ
 	}
 
 	brandListResponse.Data = brandResponses
-	brandListResponse.Total = int32(result.RowsAffected)
+	brandListResponse.Total = int32(count)
 
 	return &brandListResponse, nil
 }
