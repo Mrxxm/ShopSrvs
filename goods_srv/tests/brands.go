@@ -7,24 +7,28 @@ import (
 	"shop_srvs/goods_srv/proto"
 )
 
-var brandClient proto.GoodsClient
+var goodsClient proto.GoodsClient
 var connect *grpc.ClientConn
 var err error
 
 func Init() {
-	connect, err = grpc.Dial("192.168.15.21:53296", grpc.WithInsecure())
+	connect, err = grpc.Dial("192.168.15.21:56311", grpc.WithInsecure())
 	if err != nil {
 		panic("连接失败")
 	}
 
-	brandClient = proto.NewGoodsClient(connect)
+	goodsClient = proto.NewGoodsClient(connect)
+	if goodsClient == nil {
+		panic("创建 gRPC 客户端失败，goodsClient 为 nil")
+	}
+
 }
 
 func TestBrandList() {
 
-	BrandListResponse, err := brandClient.BrandList(context.Background(), &proto.BrandFilterRequest{Pages: 1, PagePerNums: 5})
+	BrandListResponse, err := goodsClient.BrandList(context.Background(), &proto.BrandFilterRequest{Pages: 2, PagePerNums: 5})
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
 	for _, brandResponse := range BrandListResponse.Data {

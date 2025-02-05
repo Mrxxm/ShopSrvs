@@ -1,7 +1,6 @@
 package handler
 
-//
-// 品牌分类
+//// 品牌分类
 //func (s *GoodsService) CategoryBrandList(context.Context, *proto.CategoryBrandFilterRequest) (*proto.CategoryBrandListResponse, error) {
 //	return nil, nil
 //}

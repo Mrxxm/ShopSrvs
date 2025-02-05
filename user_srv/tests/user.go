@@ -12,7 +12,7 @@ var connect *grpc.ClientConn
 var err error
 
 func Init() {
-	connect, err = grpc.Dial("127.0.0.1:50052", grpc.WithInsecure())
+	connect, err = grpc.Dial("192.168.15.21:55002", grpc.WithInsecure())
 	if err != nil {
 		panic("连接失败")
 	}
@@ -24,7 +24,7 @@ func TestGetUserList() {
 
 	UserListResponse, err := userClient.GetUserList(context.Background(), &proto.PageInfo{Page: 1, PageSize: 5})
 	if err != nil {
-		panic("调用失败")
+		panic(err)
 	}
 
 	for _, userInfoResponse := range UserListResponse.Data {
@@ -45,7 +45,7 @@ func TestGetUserByMobile() {
 
 	user, err := userClient.GetUserByMobile(context.Background(), &proto.MobileRequest{Mobile: "13777891955"})
 	if err != nil {
-		panic("调用失败")
+		panic(err)
 	}
 	fmt.Println(user.Mobile)
 }
@@ -54,7 +54,7 @@ func TestGetUserById() {
 
 	user, err := userClient.GetUserById(context.Background(), &proto.IdRequest{Id: "3"})
 	if err != nil {
-		panic("调用失败")
+		panic(err)
 	}
 	fmt.Println(user.Id, user.Mobile)
 }
@@ -67,7 +67,7 @@ func TestCreateUser() {
 		Password: "admin321",
 	})
 	if err != nil {
-		panic("调用失败")
+		panic(err)
 	}
 	fmt.Println(user.Nickname, user.Mobile)
 }
@@ -79,5 +79,5 @@ func main() {
 	TestGetUserList()
 	TestGetUserByMobile()
 	TestGetUserById()
-	TestCreateUser()
+	//TestCreateUser()
 }
