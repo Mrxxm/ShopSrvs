@@ -1,11 +1,14 @@
 package model
 
 type Category struct {
-	Name        string `gorm:"column:name;not null;default:'';type:varchar(20) comment '分类名称'"`
-	Level       int32  `gorm:"column:level;not null;default:1;type:int comment '级别'"`
-	IsTab       int8   `gorm:"column:is_tab;not null;default:0;type:tinyint comment '是否展示在tab栏 0否 1是'"`
-	PCategoryID int32  `gorm:"column:pid;type:int comment '父级id'"`
-	PCategory   *Category
+	Name  string `gorm:"column:name;not null;default:'';type:varchar(20) comment '分类名称'"`
+	Level int32  `gorm:"column:level;not null;default:1;type:int comment '级别'"`
+	IsTab int8   `gorm:"column:is_tab;not null;default:0;type:tinyint comment '是否展示在tab栏 0否 1是'"`
+
+	PCategoryID int32       `gorm:"column:pid;type:int comment '父级id'" json:"parent"`
+	PCategory   *Category   `gorm:"references:ID" json:"parent_category"`
+	SubCategory []*Category `gorm:"foreignKey:PCategoryID;references:ID" json:"sub_category"`
+
 	BaseModel
 }
 
