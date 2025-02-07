@@ -6,7 +6,7 @@ type Category struct {
 	IsTab int8   `gorm:"column:is_tab;not null;default:0;type:tinyint comment '是否展示在tab栏 0否 1是'"`
 
 	PCategoryID int32       `gorm:"column:pid;type:int comment '父级id'" json:"parent"`
-	PCategory   *Category   `gorm:"references:ID" json:"parent_category"`
+	PCategory   *Category   `gorm:"foreignKey:PCategoryID;references:ID" json:"parent_category"`
 	SubCategory []*Category `gorm:"foreignKey:PCategoryID;references:ID" json:"sub_category"`
 
 	BaseModel
@@ -21,10 +21,10 @@ type Brands struct {
 
 // 品牌和分类是多对多关系
 type GoodsCategoryBrand struct {
-	CategoryID int32 `gorm:"type:int;index:index_category_brand,unique"`
-	Category   Category
-	BrandsID   int32 `gorm:"type:int;index:index_category_brand,unique"`
-	Brands     Brands
+	CategoryID int32    `gorm:"type:int;index:index_category_brand,unique;column:category_id"`
+	Category   Category `gorm:"foreignKey:CategoryID;references:ID"`
+	BrandsID   int32    `gorm:"type:int;index:index_category_brand,unique"`
+	Brands     Brands   `gorm:"foreignKey:BrandsID;references:ID"`
 
 	BaseModel
 }

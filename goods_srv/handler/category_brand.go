@@ -19,7 +19,7 @@ func (s *GoodsService) CategoryBrandList(context context.Context, req *proto.Cat
 	global.DB.Model(&model.GoodsCategoryBrand{}).Count(&total)
 	categoryBrandListResponse.Total = int32(total)
 
-	global.DB.Scopes(Paginate(int(req.Pages), int(req.PagePerNums))).Find(&categoryBrands)
+	global.DB.Scopes(Paginate(int(req.Pages), int(req.PagePerNums))).Preload("Category").Preload("Brands").Find(&categoryBrands)
 
 	var categoryResponses []*proto.CategoryBrandResponse
 	for _, categoryBrand := range categoryBrands {
