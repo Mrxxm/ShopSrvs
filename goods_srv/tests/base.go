@@ -10,7 +10,7 @@ var connect *grpc.ClientConn
 var err error
 
 func Init() {
-	connect, err = grpc.Dial("192.168.15.21:60012", grpc.WithInsecure())
+	connect, err = grpc.Dial("192.168.15.21:57562", grpc.WithInsecure())
 	if err != nil {
 		panic("连接失败")
 	}
@@ -28,5 +28,6 @@ func main() {
 
 	//TestBrandList()
 	//TestAllCategoryList()
-	TestCategoryBrandList()
+	//TestCategoryBrandList()
+	TestBatchGetGoodsList()
 }

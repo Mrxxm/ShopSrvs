@@ -42,10 +42,10 @@ type Banner struct {
 }
 
 type Goods struct {
-	CategoryID int32 `gorm:"type:int comment '分类id'"`
-	Category   Category
-	BrandsID   int32 `gorm:"type:int comment '品牌id'"`
-	Brands     Brands
+	CategoryID int32    `gorm:"type:int comment '分类id'"`
+	Category   Category `gorm:"foreignKey:CategoryID;references:ID"`
+	BrandsID   int32    `gorm:"type:int comment '品牌id'"`
+	Brands     Brands   `gorm:"foreignKey:BrandsID;references:ID"`
 
 	OnSale int32 `gorm:"column:on_sale;default:0;not null;type:tinyint(1) comment '是否在售 0 否 1 是'"`
 	IsFree int32 `gorm:"column:is_free;default:0;not null;type:tinyint(1) comment '是否免运费 0 否 1 是'"`
@@ -62,7 +62,7 @@ type Goods struct {
 	GoodsBrief       string   `gorm:"not null;default:'';type:varchar(100) comment '商品简介'"`
 	Images           GormList `gorm:"not null;type:json comment '商品详情页轮播图'"`
 	DescImages       GormList `gorm:"not null;type:json comment '商品详情页下拉图'"`
-	GoodsFrontImages GormList `gorm:"not null;type:varchar(1000) comment '商品首图'"`
+	GoodsFrontImages string   `gorm:"not null;type:varchar(1000) comment '商品首图'"`
 
 	BaseModel
 }
