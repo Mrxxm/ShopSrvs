@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"shop_srvs/inventory_srv/global"
+	"shop_srvs/inventory_srv/handler"
 	"shop_srvs/inventory_srv/initialize"
 	"shop_srvs/inventory_srv/proto"
 	"shop_srvs/inventory_srv/utils"
@@ -38,7 +39,8 @@ func main() {
 	server := grpc.NewServer()
 	// 4.注册处理逻辑handler(RegisterGreeterServer为自动生成)
 	//proto.RegisterGoodsServer(server, &handler.GoodsService{})
-	proto.RegisterInventoryServer(server, &proto.UnimplementedInventoryServer{})
+	//proto.RegisterInventoryServer(server, &proto.UnimplementedInventoryServer{})
+	proto.RegisterInventoryServer(server, &handler.InventoryServer{})
 	// 5.启动服务
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *IP, *Port))
 	if err != nil {

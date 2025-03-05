@@ -82,25 +82,3 @@ func InitConfig() {
 	}
 	zap.S().Infof("转换nacos配置打印：%+v", global.ServerConfig)
 }
-
-func InitConfig2() {
-	debug := GetEnvInfo("SHOP")
-	configFilePrefix := "config"
-	configFileName := fmt.Sprintf("%s-pro", configFilePrefix)
-	if debug == "debug" {
-		configFileName = fmt.Sprintf("%s-debug", configFilePrefix)
-	}
-
-	v := viper.New()
-	v.SetConfigType("yaml")
-	v.AddConfigPath("inventory_srv")
-	v.SetConfigName(configFileName)
-
-	if err := v.ReadInConfig(); err != nil {
-		panic(err)
-	}
-
-	if err := v.Unmarshal(&global.ServerConfig); err != nil {
-		panic(err)
-	}
-}
