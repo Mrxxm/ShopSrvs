@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"shop_srvs/inventory_srv/global"
 	"shop_srvs/inventory_srv/model"
 	"shop_srvs/inventory_srv/proto"
@@ -43,7 +44,7 @@ func (s *InventoryServer) Sell(ctx context.Context, req *proto.SellInfo) (*empty
 
 	for _, goodInfo := range req.GoodsInfo {
 		var inv model.Inventory
-		if result := global.DB.Where("goods = ?", goodInfo.GoodsId).First(&inv); result.RowsAffected == 0 {
+		if result := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("goods = ?", goodInfo.GoodsId).First(&inv); result.RowsAffected == 0 {
 			tx.Rollback()
 			return nil, status.Errorf(codes.InvalidArgument, "没有库存信息")
 		}

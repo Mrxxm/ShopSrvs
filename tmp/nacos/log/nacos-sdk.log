@@ -81,3 +81,4 @@
 2025-03-05T16:38:51.372+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:<tmp/nacos/log>   cacheDir:<tmp/nacos/cache>
 2025-03-05T16:41:41.476+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:<tmp/nacos/log>   cacheDir:<tmp/nacos/cache>
 2025-03-05T16:53:35.649+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:<tmp/nacos/log>   cacheDir:<tmp/nacos/cache>
+2025-03-06T14:06:01.614+0800	[34mINFO[0m	clients/client_factory.go:47	logDir:<tmp/nacos/log>   cacheDir:<tmp/nacos/cache>

@@ -34,7 +34,7 @@ func TestSell() {
 		GoodsInfo: []*proto.GoodsInvInfo{
 			{
 				GoodsId: 421,
-				Num:     2,
+				Num:     1,
 			},
 		},
 	})
