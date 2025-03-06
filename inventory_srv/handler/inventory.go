@@ -2,11 +2,11 @@ package handler
 
 import (
 	"context"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"shop_srvs/inventory_srv/global"
 	"shop_srvs/inventory_srv/model"
 	"shop_srvs/inventory_srv/proto"
@@ -44,18 +44,25 @@ func (s *InventoryServer) Sell(ctx context.Context, req *proto.SellInfo) (*empty
 
 	for _, goodInfo := range req.GoodsInfo {
 		var inv model.Inventory
-		if result := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("goods = ?", goodInfo.GoodsId).First(&inv); result.RowsAffected == 0 {
-			tx.Rollback()
-			return nil, status.Errorf(codes.InvalidArgument, "没有库存信息")
+		for { // 失败了，重新执行
+			if result := global.DB.Where("goods = ?", goodInfo.GoodsId).First(&inv); result.RowsAffected == 0 {
+				tx.Rollback()
+				return nil, status.Errorf(codes.InvalidArgument, "没有库存信息")
+			}
+			// 判断库存是否充足
+			if inv.Stocks < goodInfo.Num {
+				tx.Rollback()
+				return nil, status.Errorf(codes.ResourceExhausted, "库存不足")
+			}
+			// 扣减
+			inv.Stocks -= goodInfo.Num
+			//tx.Save(&inv)
+			if res := tx.Model(&model.Inventory{}).Select("stocks", "version").Where("goods = ? and version = ?", goodInfo.GoodsId, inv.Version).Updates(model.Inventory{Stocks: inv.Stocks, Version: inv.Version + 1}); res.RowsAffected == 0 {
+				zap.S().Info("库存扣减失败")
+			} else {
+				break
+			}
 		}
-		// 判断库存是否充足
-		if inv.Stocks < goodInfo.Num {
-			tx.Rollback()
-			return nil, status.Errorf(codes.ResourceExhausted, "库存不足")
-		}
-		// 扣减
-		inv.Stocks -= goodInfo.Num
-		tx.Save(&inv)
 	}
 
 	tx.Commit()

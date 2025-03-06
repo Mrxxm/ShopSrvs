@@ -26,7 +26,7 @@ func InitDB() {
 			SlowThreshold:             time.Second, // 慢SQL阈值
 			LogLevel:                  logger.Info, // Log level
 			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
-			ParameterizedQueries:      true,        // Don't include params in the SQL log
+			ParameterizedQueries:      false,       // Don't include params in the SQL log
 			Colorful:                  true,        // 禁用彩色打印
 		},
 	)
