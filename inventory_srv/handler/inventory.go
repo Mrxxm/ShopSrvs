@@ -2,7 +2,10 @@ package handler
 
 import (
 	"context"
-	"go.uber.org/zap"
+	"fmt"
+	goredislib "github.com/go-redis/redis/v8"
+	"github.com/go-redsync/redsync/v4"
+	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -39,29 +42,42 @@ func (*InventoryServer) InvDetail(ctx context.Context, req *proto.GoodsInvInfo) 
 }
 
 func (s *InventoryServer) Sell(ctx context.Context, req *proto.SellInfo) (*emptypb.Empty, error) {
+
 	// 扣减库存，本地事务
 	tx := global.DB.Begin()
 
+	client := goredislib.NewClient(&goredislib.Options{
+		Addr: "192.168.15.21:6379",
+	})
+	pool := goredis.NewPool(client) // or, pool := redigo.NewPool(...)
+
+	rs := redsync.New(pool)
+
 	for _, goodInfo := range req.GoodsInfo {
 		var inv model.Inventory
-		for { // 失败了，重新执行
-			if result := global.DB.Where("goods = ?", goodInfo.GoodsId).First(&inv); result.RowsAffected == 0 {
-				tx.Rollback()
-				return nil, status.Errorf(codes.InvalidArgument, "没有库存信息")
-			}
-			// 判断库存是否充足
-			if inv.Stocks < goodInfo.Num {
-				tx.Rollback()
-				return nil, status.Errorf(codes.ResourceExhausted, "库存不足")
-			}
-			// 扣减
-			inv.Stocks -= goodInfo.Num
-			//tx.Save(&inv)
-			if res := tx.Model(&model.Inventory{}).Select("stocks", "version").Where("goods = ? and version = ?", goodInfo.GoodsId, inv.Version).Updates(model.Inventory{Stocks: inv.Stocks, Version: inv.Version + 1}); res.RowsAffected == 0 {
-				zap.S().Info("库存扣减失败")
-			} else {
-				break
-			}
+
+		mutex := rs.NewMutex(fmt.Sprintf("goods_id_%d", goodInfo.GoodsId))
+
+		if err := mutex.Lock(); err != nil {
+			tx.Rollback()
+			return nil, status.Errorf(codes.Internal, "获取锁异常")
+		}
+
+		if result := global.DB.Where("goods = ?", goodInfo.GoodsId).First(&inv); result.RowsAffected == 0 {
+			tx.Rollback()
+			return nil, status.Errorf(codes.InvalidArgument, "没有库存信息")
+		}
+		// 判断库存是否充足
+		if inv.Stocks < goodInfo.Num {
+			tx.Rollback()
+			return nil, status.Errorf(codes.ResourceExhausted, "库存不足")
+		}
+		// 扣减
+		inv.Stocks -= goodInfo.Num
+		tx.Save(&inv)
+
+		if ok, err := mutex.Unlock(); !ok || err != nil {
+			return nil, status.Errorf(codes.Internal, "释放锁异常")
 		}
 	}
 
