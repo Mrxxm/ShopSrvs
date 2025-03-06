@@ -26,8 +26,11 @@ func main() {
 	Init()
 	defer connect.Close()
 
-	//TestSetInventory(421, 100)
-	TestGetInventory()
-	TestSell()
-	TestGetInventory()
+	for i := 421; i < 840; i++ {
+		//TestSetInventory(int32(i), 100)
+	}
+	//
+	//TestGetInventory()
+	//TestSell()
+	//TestGetInventory()
 }
