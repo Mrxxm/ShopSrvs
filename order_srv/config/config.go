@@ -5,6 +5,19 @@ type ServerConfig struct {
 	Tags         []string     `mapstructure:"tags" json:"tags"`
 	MysqlConfig  MysqlConfig  `mapstructure:"mysql" json:"mysql"`
 	ConsulConfig ConsulConfig `mapstructure:"consul" json:"consul"`
+
+	// 商品微服务配置
+	GoodsSrvInfo GoodsSrvConfig `mapstructure:"goods_srv" json:"goods_srv"`
+	// 库存微服务配置
+	InventorySrvInfo InventorySrvConfig `mapstructure:"inventory_srv" json:"inventory_srv"`
+}
+
+type GoodsSrvConfig struct {
+	Name string `mapstructure:"name" json:"name"`
+}
+
+type InventorySrvConfig struct {
+	Name string `mapstructure:"name" json:"name"`
 }
 
 type MysqlConfig struct {

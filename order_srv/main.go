@@ -34,6 +34,7 @@ func main() {
 	// 2.初始化配置
 	initialize.InitConfig()
 	initialize.InitDB()
+	initialize.InitSrvConn()
 	// 3.实例化一个server
 	server := grpc.NewServer()
 	// 4.注册处理逻辑handler(RegisterGreeterServer为自动生成)
