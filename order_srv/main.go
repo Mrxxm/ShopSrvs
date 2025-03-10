@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"shop_srvs/order_srv/global"
+	"shop_srvs/order_srv/handler"
 	"shop_srvs/order_srv/initialize"
 	"shop_srvs/order_srv/proto"
 	"shop_srvs/order_srv/utils"
@@ -40,7 +41,9 @@ func main() {
 	// 4.注册处理逻辑handler(RegisterGreeterServer为自动生成)
 	//proto.RegisterGoodsServer(server, &handler.GoodsService{})
 	//proto.RegisterInventoryServer(server, &proto.UnimplementedInventoryServer{})
-	proto.RegisterOrderServer(server, &proto.UnimplementedOrderServer{})
+	//proto.RegisterOrderServer(server, &proto.UnimplementedOrderServer{})
+	proto.RegisterOrderServer(server, &handler.OrderServer{})
+
 	// 5.启动服务
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *IP, *Port))
 	if err != nil {
