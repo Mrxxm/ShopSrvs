@@ -377,6 +377,80 @@ func (o *OrderListener) CheckLocalTransaction(msg *primitive.MessageExt) primiti
 //	return &proto.OrderInfoResponse{Id: orderListener.ID, OrderSn: order.OrderSn, Total: orderListener.OrderAmount}, nil
 //}
 
+func (*OrderServer) CreateOrder(ctx context.Context, req *proto.OrderRequest) (*proto.OrderInfoResponse, error) {
+	var goodsIds []int32
+	var shopCarts []model.ShoppingCart
+	goodsNumsMap := make(map[int32]int32)
+	if result := global.DB.Where(&model.ShoppingCart{User: req.UserId, Checked: true}).Find(&shopCarts); result.RowsAffected == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "没有选中结算的商品")
+	}
+	for _, shopCart := range shopCarts {
+		goodsIds = append(goodsIds, shopCart.Goods)
+		goodsNumsMap[shopCart.Goods] = shopCart.Nums
+	}
+
+	// 跨服务调用 - 商品微服务
+	goods, err := global.GoodsSrvClient.BatchGetGoods(context.Background(), &proto.BatchGoodsIdInfo{Id: goodsIds})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "批量查询商品信息失败")
+	}
+
+	var orderAmount float32
+	var orderGoods []*model.OrderGoods
+	var goodsInvInfo []*proto.GoodsInvInfo
+	for _, good := range goods.Data {
+		orderAmount += good.ShopPrice * float32(goodsNumsMap[good.Id])
+		orderGoods = append(orderGoods, &model.OrderGoods{
+			Goods:      good.Id,
+			GoodsName:  good.Name,
+			GoodsImage: good.GoodsFrontImage,
+			GoodsPrice: good.ShopPrice,
+			Nums:       goodsNumsMap[good.Id],
+		})
+		goodsInvInfo = append(goodsInvInfo, &proto.GoodsInvInfo{
+			GoodsId: good.Id,
+			Num:     goodsNumsMap[good.Id],
+		})
+	}
+
+	// 跨服务调用 - 库存微服务
+	if _, err = global.InventorySrvClient.Sell(context.Background(), &proto.SellInfo{GoodsInfo: goodsInvInfo}); err != nil {
+		return nil, status.Errorf(codes.ResourceExhausted, "扣减库存失败")
+	}
+
+	tx := global.DB.Begin()
+	// 生成订单表
+	order := model.OrderInfo{
+		OrderSn:      GenerateOrderSn(req.UserId),
+		Address:      req.Address,
+		SignerName:   req.Name,
+		SingerMobile: req.Mobile,
+		Post:         req.Post,
+		User:         req.UserId,
+		OrderMount:   orderAmount,
+	}
+
+	if result := tx.Save(&order); result.RowsAffected == 0 {
+		tx.Rollback()
+	}
+
+	for _, orderGood := range orderGoods {
+		orderGood.Order = order.ID
+	}
+
+	// 批量插入orderGoods
+	if result := tx.CreateInBatches(orderGoods, 100); result.RowsAffected == 0 {
+		tx.Rollback()
+	}
+	// 删除购物车中已选中商品
+	if result := tx.Where(&model.ShoppingCart{User: req.UserId, Checked: true}).Delete(model.ShoppingCart{}); result.RowsAffected == 0 {
+		tx.Rollback()
+	}
+	tx.Commit()
+
+	return &proto.OrderInfoResponse{Id: order.ID, OrderSn: order.OrderSn, Total: order.OrderMount}, nil
+}
+
 func (*OrderServer) UpdateOrderStatus(ctx context.Context, req *proto.OrderStatus) (*emptypb.Empty, error) {
 	//先查询，再更新 实际上有两条sql执行， select 和 update语句
 	if result := global.DB.Model(&model.OrderInfo{}).Where("order_sn = ?", req.OrderSn).Update("status", req.Status); result.RowsAffected == 0 {
