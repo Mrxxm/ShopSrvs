@@ -377,7 +377,7 @@ func (o *OrderListener) CheckLocalTransaction(msg *primitive.MessageExt) primiti
 //	return &proto.OrderInfoResponse{Id: orderListener.ID, OrderSn: order.OrderSn, Total: orderListener.OrderAmount}, nil
 //}
 
-func (*OrderServer) CreateOrder(ctx context.Context, req *proto.OrderRequest) (*proto.OrderInfoResponse, error) {
+func (*OrderServer) Create(ctx context.Context, req *proto.OrderRequest) (*proto.OrderInfoResponse, error) {
 	var goodsIds []int32
 	var shopCarts []model.ShoppingCart
 	goodsNumsMap := make(map[int32]int32)
@@ -443,7 +443,7 @@ func (*OrderServer) CreateOrder(ctx context.Context, req *proto.OrderRequest) (*
 		tx.Rollback()
 	}
 	// 删除购物车中已选中商品
-	if result := tx.Where(&model.ShoppingCart{User: req.UserId, Checked: true}).Delete(model.ShoppingCart{}); result.RowsAffected == 0 {
+	if result := tx.Where(&model.ShoppingCart{User: req.UserId, Checked: true}).Delete(&model.ShoppingCart{}); result.RowsAffected == 0 {
 		tx.Rollback()
 	}
 	tx.Commit()
